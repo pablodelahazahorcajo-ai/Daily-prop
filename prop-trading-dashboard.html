@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prop Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100">
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect } = React;
+
+        // ============ UTILITY FUNCTIONS ============
+        const getNextDay = (dateStr) => {
+            const date = new Date(dateStr);
+            const isFriday = date.getDay() === 5;
+            const daysToAdd = isFriday ? 3 : 1;
+            date.setDate(date.getDate() + daysToAdd);
+            return date.toLocaleDateString('es-ES');
+        };
+
+        const calculateTotals = (data) => {
+            let totalInvested = 0, totalWithdrawn = 0, activeAccounts = 0;
+            let realPhase = 0, phase2 = 0, phase1 = 0, totalPnL = 0;
+
+            Object.values(data.traders).forEach(trader => {
+                trader.brokers.forEach(entry => {
+                    if (entry.active !== false) {
+                        activeAccounts++;
+                        if (entry.price) totalInvested += entry.price;
+                        if (entry.retiro) totalWithdrawn += entry.retiro;
+                        totalPnL += entry.dailyProfit || 0;
+                        if (entry.fase === 'REAL') realPhase++;
+                        else if (entry.fase === '2') phase2++;
+                        else if (entry.fase === '1') phase1++;
+                    }
+                });
+            });
+
+            return { totalInvested, totalWithdrawn, activeAccounts, realPhase, phase2, phase1, totalPnL };
+        };
+
+        const executeDaily = (data) => {
+            const newData = JSON.parse(JSON.stringify(data));
+
+            Object.keys(newData.traders).forEach(traderId => {
+                const trader = newData.traders[traderId];
+                if (trader.brokers.length === 0) return;
+
+                const lastDate = trader.lastUpdateDate || new Date().toLocaleDateString('es-ES');
+                const nextDate = getNextDay(lastDate);
+                const newBrokers = [];
+
+                trader.brokers.forEach(entry => {
+                    newBrokers.push(entry);
+                    const copiedEntry = JSON.parse(JSON.stringify(entry));
+                    copiedEntry.id = `${entry.id}-${nextDate}`;
+                    copiedEntry.date = nextDate;
+                    copiedEntry.cierre = '-';
+                    copiedEntry.price = undefined;
+                    copiedEntry.retiro = undefined;
+                    copiedEntry.active = true;
+                    copiedEntry.dailyProfit = 0;
+
+                    if (entry.tds && entry.tds.match(/^\d+\/\d+$/) && entry.dailyProfit > 500) {
+                        const [actual, maximo] = entry.tds.split('/').map(Number);
+                        if (actual < maximo) {
+                            copiedEntry.tds = `${Math.min(actual + 1, maximo)}/${maximo}`;
+                        }
+                    }
+
+                    newBrokers.push(copiedEntry);
+                });
+
+                newBrokers.sort((a, b) => {
+                    const phaseOrder = { 'PAGO': 1, 'WAIT': 2, 'REAL': 3, '2': 4, '1': 5 };
+                    const aPhase = phaseOrder[a.fase] || 99;
+                    const bPhase = phaseOrder[b.fase] || 99;
+                    if (aPhase !== bPhase) return aPhase - bPhase;
+                    return b.saldo - a.saldo;
+                });
+
+                newData.traders[traderId] = { ...trader, brokers: newBrokers, lastUpdateDate: nextDate };
+            });
+
+            const stats = calculateTotals(newData);
+            newData.globalStats = stats;
+            return newData;
+        };
+
+        // ============ COMPONENTS ============
+
+        function Header({ data, onExecuteDaily, onExport, onImport, isExecuting }) {
+            const stats = calculateTotals(data);
+            return (
+                <header className="border-b border-slate-200 bg-white shadow-sm">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-3xl font-bold text-slate-900">📊 Prop Trading Dashboard</h1>
+                                <p className="text-sm text-slate-500 mt-1">Sistema de gestión de cuentas prop</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={onExport} className="px-3 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+                                    <span>⬇️</span> Exportar
+                                </button>
+                                <label className="cursor-pointer px-3 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+                                    <span>⬆️</span> Importar
+                                    <input type="file" accept=".json" onChange={onImport} className="hidden" />
+                                </label>
+                                <button
+                                    onClick={onExecuteDaily}
+                                    disabled={isExecuting}
+                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-50">
+                                    <span>▶️</span> {isExecuting ? 'Ejecutando...' : 'Ejecutar Diario'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+                            <div className="bg-slate-50 p-4 rounded-lg">
+                                <p className="text-xs text-slate-600">Total Invertido</p>
+                                <p className="text-2xl font-bold text-slate-900">${stats.totalInvested.toLocaleString('es-ES')}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-lg">
+                                <p className="text-xs text-slate-600">Total Retirado</p>
+                                <p className="text-2xl font-bold text-green-600">${stats.totalWithdrawn.toLocaleString('es-ES')}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-lg">
+                                <p className="text-xs text-slate-600">Cuentas Activas</p>
+                                <p className="text-2xl font-bold text-slate-900">{stats.activeAccounts}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-lg">
+                                <p className="text-xs text-slate-600">Fase REAL</p>
+                                <p className="text-2xl font-bold text-blue-600">{stats.realPhase}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-lg">
+                                <p className="text-xs text-slate-600">Total P&L</p>
+                                <p className={`text-2xl font-bold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    ${stats.totalPnL.toLocaleString('es-ES')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+        }
+
+        function DashboardTab({ data }) {
+            const traderStats = Object.entries(data.traders).map(([id, trader]) => {
+                const activeAccounts = trader.brokers.filter(b => b.active !== false).length;
+                const realCount = trader.brokers.filter(b => b.fase === 'REAL').length;
+                const phase2Count = trader.brokers.filter(b => b.fase === '2').length;
+                const phase1Count = trader.brokers.filter(b => b.fase === '1').length;
+                const totalPnL = trader.brokers.reduce((sum, b) => sum + (b.dailyProfit || 0), 0);
+                return { id, name: trader.name, activeAccounts, realCount, phase2Count, phase1Count, totalPnL, lastUpdate: trader.lastUpdateDate };
+            });
+
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {traderStats.map(stat => (
+                            <div key={stat.id} className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-lg transition-shadow">
+                                <h3 className="font-semibold text-slate-900">{stat.name}</h3>
+                                <p className="text-xs text-slate-500 mt-1">Última: {stat.lastUpdate}</p>
+                                <div className="space-y-2 mt-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-600">Cuentas:</span>
+                                        <span className="font-semibold text-slate-900">{stat.activeAccounts}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-600">REAL:</span>
+                                        <span className="font-semibold text-blue-600">{stat.realCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-600">Fase 2:</span>
+                                        <span className="font-semibold text-purple-600">{stat.phase2Count}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-600">Fase 1:</span>
+                                        <span className="font-semibold text-orange-600">{stat.phase1Count}</span>
+                                    </div>
+                                    <div className="pt-2 border-t border-slate-200 flex justify-between">
+                                        <span className="text-sm font-medium">P&L:</span>
+                                        <span className={`font-bold ${stat.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            ${stat.totalPnL.toLocaleString('es-ES')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function TraderTab({ trader, traderId, onUpdate }) {
+            const [isAddingEntry, setIsAddingEntry] = useState(false);
+            const [editingEntry, setEditingEntry] = useState(null);
+            const [formData, setFormData] = useState({});
+
+            const phaseColors = {
+                'PAGO': 'bg-yellow-100 text-yellow-800',
+                'WAIT': 'bg-gray-100 text-gray-800',
+                'REAL': 'bg-blue-100 text-blue-800',
+                '2': 'bg-purple-100 text-purple-800',
+                '1': 'bg-orange-100 text-orange-800'
+            };
+
+            const getDuplicateAssets = () => {
+                const activoMap = {};
+                trader.brokers.forEach(entry => {
+                    if (entry.activo && entry.fase !== 'PAGO') {
+                        if (!activoMap[entry.activo]) activoMap[entry.activo] = [];
+                        activoMap[entry.activo].push(entry);
+                    }
+                });
+                return Object.entries(activoMap).filter(([_, entries]) => entries.length > 1);
+            };
+
+            const duplicates = getDuplicateAssets();
+
+            const handleAddEntry = () => {
+                setEditingEntry({
+                    id: `${traderId}-${Date.now()}`,
+                    date: new Date().toLocaleDateString('es-ES'),
+                    account: '',
+                    company: '',
+                    app: '',
+                    notes: '',
+                    saldo: 100000,
+                    tds: '0/3',
+                    fase: '1',
+                    dailyProfit: 0,
+                    active: true
+                });
+                setFormData({});
+                setIsAddingEntry(true);
+            };
+
+            const handleSaveEntry = () => {
+                if (!editingEntry) return;
+                const entry = { ...editingEntry, ...formData };
+                const exists = trader.brokers.find(e => e.id === entry.id);
+                const newBrokers = exists
+                    ? trader.brokers.map(e => e.id === entry.id ? entry : e)
+                    : [...trader.brokers, entry];
+                onUpdate({ ...trader, brokers: newBrokers });
+                setIsAddingEntry(false);
+                setEditingEntry(null);
+                setFormData({});
+            };
+
+            const handleDeleteEntry = (id) => {
+                onUpdate({ ...trader, brokers: trader.brokers.filter(e => e.id !== id) });
+            };
+
+            const activeAccounts = trader.brokers.filter(b => b.active !== false).length;
+            const realCount = trader.brokers.filter(b => b.fase === 'REAL').length;
+            const phase2Count = trader.brokers.filter(b => b.fase === '2').length;
+            const phase1Count = trader.brokers.filter(b => b.fase === '1').length;
+            const totalPnL = trader.brokers.reduce((sum, b) => sum + (b.dailyProfit || 0), 0);
+
+            return (
+                <div className="space-y-6">
+                    {duplicates.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-900 font-semibold">⚠️ Emparejamientos con el mismo ASSET:</p>
+                            {duplicates.map(([asset, entries]) => (
+                                <p key={asset} className="text-sm text-red-800 mt-1">
+                                    <strong>{asset}:</strong> {entries.length} emparejamientos abiertos
+                                </p>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-white rounded-lg border border-slate-200 p-4">
+                            <p className="text-2xl font-bold text-slate-900">{activeAccounts}</p>
+                            <p className="text-sm text-slate-600">Cuentas Activas</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-slate-200 p-4">
+                            <p className="text-2xl font-bold text-blue-600">{realCount}</p>
+                            <p className="text-sm text-slate-600">Fase REAL</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-slate-200 p-4">
+                            <p className="text-2xl font-bold text-purple-600">{phase2Count}</p>
+                            <p className="text-sm text-slate-600">Fase 2</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-slate-200 p-4">
+                            <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                ${totalPnL.toLocaleString('es-ES')}
+                            </p>
+                            <p className="text-sm text-slate-600">P&L Total</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg border border-slate-200">
+                        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                            <h3 className="font-semibold text-slate-900">Cuentas del Trader</h3>
+                            <button
+                                onClick={handleAddEntry}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                                ➕ Agregar Cuenta
+                            </button>
+                        </div>
+
+                        {isAddingEntry && editingEntry && (
+                            <div className="p-6 border-b border-slate-200 bg-slate-50">
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="text-sm font-medium">Empresa</label>
+                                        <input
+                                            type="text"
+                                            value={formData.company || ''}
+                                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Cuenta</label>
+                                        <input
+                                            type="text"
+                                            value={formData.account || ''}
+                                            onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Saldo</label>
+                                        <input
+                                            type="number"
+                                            value={formData.saldo || editingEntry.saldo}
+                                            onChange={(e) => setFormData({ ...formData, saldo: parseFloat(e.target.value) })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Fase</label>
+                                        <select
+                                            value={formData.fase || editingEntry.fase}
+                                            onChange={(e) => setFormData({ ...formData, fase: e.target.value })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                            <option>PAGO</option>
+                                            <option>WAIT</option>
+                                            <option>REAL</option>
+                                            <option value="2">Fase 2</option>
+                                            <option value="1">Fase 1</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Daily Profit</label>
+                                        <input
+                                            type="number"
+                                            value={formData.dailyProfit || 0}
+                                            onChange={(e) => setFormData({ ...formData, dailyProfit: parseFloat(e.target.value) })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Activo (XAU, US100...)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.activo || ''}
+                                            onChange={(e) => setFormData({ ...formData, activo: e.target.value })}
+                                            className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-end">
+                                    <button
+                                        onClick={() => setIsAddingEntry(false)}
+                                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100">
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleSaveEntry}
+                                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                        Guardar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-slate-200 bg-slate-50">
+                                        <th className="px-4 py-3 text-left font-semibold">Fecha</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Empresa</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Cuenta</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Fase</th>
+                                        <th className="px-4 py-3 text-right font-semibold">Saldo</th>
+                                        <th className="px-4 py-3 text-right font-semibold">P&L</th>
+                                        <th className="px-4 py-3 text-center font-semibold">Activo</th>
+                                        <th className="px-4 py-3 text-center font-semibold">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {trader.brokers.map(entry => (
+                                        <tr
+                                            key={entry.id}
+                                            className={`border-b border-slate-100 hover:bg-slate-50 ${
+                                                duplicates.some(([asset, _]) => asset === entry.activo) ? 'bg-red-50' : ''
+                                            }`}>
+                                            <td className="px-4 py-3">{entry.date}</td>
+                                            <td className="px-4 py-3 font-medium">{entry.company}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-600">{entry.account}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`px-2 py-1 rounded text-xs font-semibold ${phaseColors[entry.fase]}`}>
+                                                    {entry.fase}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-semibold">${entry.saldo.toLocaleString('es-ES')}</td>
+                                            <td className={`px-4 py-3 text-right font-semibold ${entry.dailyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                ${entry.dailyProfit.toLocaleString('es-ES')}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {entry.activo && (
+                                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${duplicates.some(([asset, _]) => asset === entry.activo) ? 'bg-red-200 text-red-800' : 'bg-slate-200 text-slate-800'}`}>
+                                                        {entry.activo}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => handleDeleteEntry(entry.id)}
+                                                    className="text-red-600 hover:text-red-700 text-lg">
+                                                    ✕
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {trader.brokers.length === 0 && !isAddingEntry && (
+                            <div className="text-center py-8 text-slate-500">
+                                No hay cuentas. Haz clic en "Agregar Cuenta".
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function NewsTab() {
+            return (
+                <div className="space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-blue-900">📰 Calendario Económico</h3>
+                        <p className="text-sm text-blue-800 mt-2">
+                            Se muestran <strong>SOLO noticias de ALTO IMPACTO (HIGH)</strong>. Las noticias se obtienen de:
+                        </p>
+                        <div className="flex gap-4 mt-2 text-sm">
+                            <a href="https://www.forexfactory.com/" target="_blank" className="text-blue-600 hover:underline">
+                                📊 Forex Factory
+                            </a>
+                            <a href="https://www.myfxbook.com/forex-economic-calendar" target="_blank" className="text-blue-600 hover:underline">
+                                📈 MyFxBook
+                            </a>
+                            <a href="https://www.investing.com/economic-calendar" target="_blank" className="text-blue-600 hover:underline">
+                                📉 Investing.com
+                            </a>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg border border-slate-200 p-6 text-center">
+                        <p className="text-slate-600 mb-3">Esta sección está lista para integración de scraping en tiempo real.</p>
+                        <p className="text-sm text-slate-500">Puedes:</p>
+                        <ul className="text-sm text-slate-500 mt-2 space-y-1">
+                            <li>✓ Hacer scraping de Forex Factory, MyFxBook e Investing.com</li>
+                            <li>✓ Conectarte a una API de calendario económico</li>
+                            <li>✓ Recibir notificaciones de alto impacto</li>
+                        </ul>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('propTradingData');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        return getInitialData();
+                    }
+                }
+                return getInitialData();
+            });
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isExecuting, setIsExecuting] = useState(false);
+
+            useEffect(() => {
+                localStorage.setItem('propTradingData', JSON.stringify(data));
+            }, [data]);
+
+            const handleExecuteDaily = async () => {
+                setIsExecuting(true);
+                try {
+                    const newData = executeDaily(data);
+                    setData(newData);
+                    alert('✅ Proceso diario completado');
+                } catch (error) {
+                    alert('❌ Error al ejecutar: ' + error.message);
+                } finally {
+                    setIsExecuting(false);
+                }
+            };
+
+            const handleExportData = () => {
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `prop-trading-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            const handleImportData = (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const imported = JSON.parse(event.target.result);
+                            setData(imported);
+                            alert('✅ Datos importados correctamente');
+                        } catch (error) {
+                            alert('❌ Error al importar: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            const updateTraderData = (traderId, updatedTrader) => {
+                setData(prev => ({
+                    ...prev,
+                    traders: { ...prev.traders, [traderId]: updatedTrader }
+                }));
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+                    <Header
+                        data={data}
+                        onExecuteDaily={handleExecuteDaily}
+                        onExport={handleExportData}
+                        onImport={handleImportData}
+                        isExecuting={isExecuting}
+                    />
+
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto">
+                            {['dashboard', 'pablo', 'javi', 'guillem', 'alex', 'news'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-4 py-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
+                                        activeTab === tab
+                                            ? 'border-blue-600 text-blue-600'
+                                            : 'border-transparent text-slate-600 hover:text-slate-900'
+                                    }`}>
+                                    {tab === 'dashboard' && '📊 Dashboard'}
+                                    {tab === 'pablo' && 'PABLO'}
+                                    {tab === 'javi' && 'JAVI'}
+                                    {tab === 'guillem' && 'GUILLEM'}
+                                    {tab === 'alex' && 'ALEX'}
+                                    {tab === 'news' && '📰 Noticias'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {activeTab === 'dashboard' && <DashboardTab data={data} />}
+                        {activeTab === 'pablo' && <TraderTab trader={data.traders.PABLO} traderId="PABLO" onUpdate={(t) => updateTraderData('PABLO', t)} />}
+                        {activeTab === 'javi' && <TraderTab trader={data.traders.JAVI} traderId="JAVI" onUpdate={(t) => updateTraderData('JAVI', t)} />}
+                        {activeTab === 'guillem' && <TraderTab trader={data.traders.GUILLEM} traderId="GUILLEM" onUpdate={(t) => updateTraderData('GUILLEM', t)} />}
+                        {activeTab === 'alex' && <TraderTab trader={data.traders.ALEX} traderId="ALEX" onUpdate={(t) => updateTraderData('ALEX', t)} />}
+                        {activeTab === 'news' && <NewsTab />}
+                    </main>
+                </div>
+            );
+        }
+
+        function getInitialData() {
+            return {
+                traders: {
+                    PABLO: { name: 'PABLO (YO)', brokers: [], entries: [], lastUpdateDate: new Date().toLocaleDateString('es-ES') },
+                    JAVI: { name: 'JAVI (JG)', brokers: [], entries: [], lastUpdateDate: new Date().toLocaleDateString('es-ES') },
+                    GUILLEM: { name: 'GUILLEM (GH)', brokers: [], entries: [], lastUpdateDate: new Date().toLocaleDateString('es-ES') },
+                    ALEX: { name: 'ALEX (AS)', brokers: [], entries: [], lastUpdateDate: new Date().toLocaleDateString('es-ES') }
+                },
+                globalStats: { totalInvested: 0, totalWithdrawn: 0, activeAccounts: 0, realPhase: 0, phase2: 0, phase1: 0 }
+            };
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
