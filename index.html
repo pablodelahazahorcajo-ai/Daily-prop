@@ -4,35 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prop Trading Dashboard</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; min-height: 100vh; }
         .container { max-width: 1800px; margin: 0 auto; }
-        header { background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 20px 30px; position: sticky; top: 0; z-index: 100; }
-        h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+        header { background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 20px 30px; }
+        h1 { font-size: 28px; font-weight: 700; }
         .header-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
         .stat-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 12px; }
-        .stat-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; }
+        .stat-label { font-size: 11px; color: #94a3b8; }
         .stat-value { font-size: 22px; font-weight: 700; color: #06b6d4; margin-top: 6px; }
         main { padding: 25px 30px; }
         .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 11px 18px; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.15); color: #94a3b8; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; }
-        .tab-btn.active { background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; }
+        .tab-btn { padding: 11px 18px; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.15); color: #94a3b8; cursor: pointer; border-radius: 6px; }
+        .tab-btn.active { background: #0ea5e9; color: white; }
         .content { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); border-radius: 12px; padding: 25px; }
-        .controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 10px 20px; background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-        th { background: rgba(51, 65, 85, 0.8); padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #cbd5e1; border-bottom: 2px solid rgba(148, 163, 184, 0.2); }
-        td { padding: 10px 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
-        .phase-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
-        .phase-real { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-        .phase-pago { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        th { background: rgba(51, 65, 85, 0.8); padding: 12px; text-align: left; color: #cbd5e1; border-bottom: 2px solid rgba(148, 163, 184, 0.2); }
+        td { padding: 10px; border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
         .empty { text-align: center; padding: 60px 40px; color: #64748b; }
-        .scroll-x { overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -48,106 +38,61 @@
                     <div class="stat-label">REAL</div>
                     <div class="stat-value" id="realCount">0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">PAGO</div>
-                    <div class="stat-value" id="pagoCount">0</div>
-                </div>
             </div>
         </div>
     </header>
 
     <main class="container">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('PABLO')">PABLO</button>
-            <button class="tab-btn" onclick="switchTab('JAVI')">JAVI</button>
-            <button class="tab-btn" onclick="switchTab('GUILLEM')">GUILLEM</button>
-            <button class="tab-btn" onclick="switchTab('ALEX')">ALEX</button>
+            <button class="tab-btn active" onclick="load('PABLO')">PABLO</button>
+            <button class="tab-btn" onclick="load('JAVI')">JAVI</button>
+            <button class="tab-btn" onclick="load('GUILLEM')">GUILLEM</button>
+            <button class="tab-btn" onclick="load('ALEX')">ALEX</button>
         </div>
 
-        <div class="content">
-            <div class="controls">
-                <button class="btn-success" onclick="refreshData()">🔄 RECARGAR</button>
-            </div>
-            <div id="main-content"><div class="empty">Cargando...</div></div>
+        <div class="content" id="content">
+            <div class="empty">Cargando...</div>
         </div>
     </main>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCt6GxIpUaQa0qgToUKz3LKh01nH0Ny9LI",
-            authDomain: "prop-trading1996.firebaseapp.com",
-            projectId: "prop-trading1996",
-            storageBucket: "prop-trading1996.firebasestorage.app",
-            messagingSenderId: "168517447185",
-            appId: "1:168517447185:web:8d8b1a0d8ca49b62354bb0"
-        };
+        const PROJECT = 'prop-trading1996';
+        const API_KEY = 'AIzaSyCt6GxIpUaQa0qgToUKz3LKh01nH0Ny9LI';
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        let currentTab = 'PABLO';
-        let allData = {};
-
-        async function loadData() {
-            try {
-                allData = {};
-                for (const trader of ['PABLO', 'JAVI', 'GUILLEM', 'ALEX']) {
-                    const snapshot = await db.collection('traders').doc(trader).collection('cuentas').get();
-                    allData[trader] = snapshot.docs.map(d => d.data());
-                }
-                renderTable();
-                updateStats();
-            } catch (e) {
-                document.getElementById('main-content').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
-            }
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
+        async function load(trader) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-            renderTable();
-        }
 
-        function renderTable() {
-            const accounts = allData[currentTab] || [];
-            if (!accounts || accounts.length === 0) {
-                document.getElementById('main-content').innerHTML = '<div class="empty">Sin cuentas para ' + currentTab + '</div>';
-                return;
-            }
-
-            let html = '<div class="scroll-x"><table><thead><tr><th>Cuenta</th><th>Empresa</th><th>APP</th><th>Saldo</th><th>Cierre</th><th>Fase</th><th>Notas</th></tr></thead><tbody>';
-
-            accounts.forEach(acc => {
-                const fase = (acc.Fase || 'WAIT').toUpperCase();
-                const faseClass = 'phase-' + fase.toLowerCase();
-                html += `<tr><td>${acc.Cuenta || '-'}</td><td>${acc.Empresa || '-'}</td><td>${acc.APP || '-'}</td><td>${acc.Saldo || '$0'}</td><td>${acc.Cierre || '-'}</td><td><span class="phase-badge ${faseClass}">${fase}</span></td><td>${acc.Notas || ''}</td></tr>`;
-            });
-
-            html += '</tbody></table></div>';
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function updateStats() {
-            let total = 0, real = 0, pago = 0;
-            Object.values(allData).forEach(accounts => {
-                accounts.forEach(acc => {
-                    total++;
-                    const f = (acc.Fase || '').toUpperCase();
-                    if (f === 'REAL') real++;
-                    if (f === 'PAGO') pago++;
+            const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/traders/${trader}/cuentas?key=${API_KEY}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const docs = data.documents || [];
+                
+                let html = '<table><thead><tr><th>Cuenta</th><th>Empresa</th><th>Saldo</th><th>Cierre</th><th>Fase</th></tr></thead><tbody>';
+                
+                docs.forEach(doc => {
+                    const fields = doc.fields || {};
+                    const cuenta = fields.Cuenta?.stringValue || '-';
+                    const empresa = fields.Empresa?.stringValue || '-';
+                    const saldo = fields.Saldo?.stringValue || '$0';
+                    const cierre = fields.Cierre?.stringValue || '-';
+                    const fase = fields.Fase?.stringValue || 'WAIT';
+                    
+                    html += `<tr><td>${cuenta}</td><td>${empresa}</td><td>${saldo}</td><td>${cierre}</td><td>${fase}</td></tr>`;
                 });
-            });
-            document.getElementById('totalAccounts').innerText = total;
-            document.getElementById('realCount').innerText = real;
-            document.getElementById('pagoCount').innerText = pago;
+                
+                html += '</tbody></table>';
+                document.getElementById('content').innerHTML = html;
+                
+                document.getElementById('totalAccounts').innerText = docs.length;
+            } catch (e) {
+                document.getElementById('content').innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+            }
         }
 
-        function refreshData() {
-            loadData();
-        }
-
-        loadData();
+        load('PABLO');
     </script>
 </body>
 </html>
