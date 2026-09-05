@@ -9,16 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #e2e8f0;
             min-height: 100vh;
         }
-
         .container { max-width: 1600px; margin: 0 auto; }
-
         header {
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(10px);
@@ -28,35 +25,28 @@
             top: 0;
             z-index: 100;
         }
-
         h1 { font-size: 24px; font-weight: 600; color: #f1f5f9; }
-
         .header-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
-
         .stat-card {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.6) 100%);
             border: 1px solid rgba(148, 163, 184, 0.1);
             border-radius: 8px;
             padding: 15px;
         }
-
-        .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
         .stat-value { font-size: 24px; font-weight: 700; color: #06b6d4; margin-top: 8px; }
-
         main { padding: 30px; }
-
         .tabs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 10px;
             margin-bottom: 30px;
         }
-
         .tab-btn {
             padding: 12px 20px;
             background: rgba(30, 41, 59, 0.6);
@@ -68,10 +58,8 @@
             font-weight: 500;
             transition: all 0.3s ease;
         }
-
-        .tab-btn:hover { background: rgba(51, 65, 85, 0.8); color: #cbd5e1; }
-        .tab-btn.active { background: #0ea5e9; color: white; border-color: #0ea5e9; }
-
+        .tab-btn:hover { background: rgba(51, 65, 85, 0.8); }
+        .tab-btn.active { background: #0ea5e9; color: white; }
         .content {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(10px);
@@ -79,14 +67,7 @@
             border-radius: 12px;
             padding: 30px;
         }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-
+        .controls { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
         button {
             padding: 11px 24px;
             background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
@@ -98,19 +79,10 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-
-        button:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(6, 182, 212, 0.3); }
-
-        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        button:hover { transform: translateY(-2px); }
         .btn-import { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 13px;
-        }
-
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
         th {
             background: rgba(51, 65, 85, 0.8);
             padding: 15px;
@@ -119,17 +91,10 @@
             font-weight: 600;
             color: #cbd5e1;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             border-bottom: 2px solid rgba(148, 163, 184, 0.2);
         }
-
-        td {
-            padding: 14px 15px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-        }
-
+        td { padding: 14px 15px; border-bottom: 1px solid rgba(148, 163, 184, 0.1); }
         tr:hover { background: rgba(148, 163, 184, 0.05); }
-
         .phase-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -138,17 +103,13 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-
+        .phase-real { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         .phase-pago { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
         .phase-wait { background: rgba(107, 114, 128, 0.2); color: #d1d5db; }
-        .phase-real { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         .phase-2 { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
         .phase-1 { background: rgba(249, 115, 22, 0.2); color: #fed7aa; }
-
         .empty { text-align: center; padding: 60px 40px; color: #64748b; }
-
         .scroll-x { overflow-x: auto; }
-
         .modal {
             display: none;
             position: fixed;
@@ -159,7 +120,6 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
         }
-
         .modal-content {
             background: #1e293b;
             margin: 10% auto;
@@ -171,56 +131,20 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-
-        .modal-header {
-            font-size: 20px;
-            font-weight: 600;
-            color: #f1f5f9;
-            margin-bottom: 20px;
-        }
-
-        .close-modal {
-            color: #94a3b8;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #cbd5e1;
-        }
-
-        .form-group input,
-        .form-group textarea {
+        .modal-header { font-size: 20px; font-weight: 600; color: #f1f5f9; margin-bottom: 20px; }
+        .close-modal { color: #94a3b8; float: right; font-size: 28px; cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; }
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
             background: rgba(51, 65, 85, 0.6);
             border: 1px solid rgba(148, 163, 184, 0.2);
             color: #e2e8f0;
             border-radius: 6px;
-            font-family: monospace;
             font-size: 12px;
         }
-
-        .form-group textarea {
-            min-height: 200px;
-            resize: vertical;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #0ea5e9;
-        }
-
+        .form-group textarea { min-height: 200px; resize: vertical; }
         .log-box {
             background: rgba(51, 65, 85, 0.4);
             border: 1px solid rgba(148, 163, 184, 0.1);
@@ -233,40 +157,26 @@
             font-family: monospace;
             color: #06b6d4;
         }
-
-        .chart-container {
-            background: rgba(51, 65, 85, 0.4);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
     </style>
 </head>
 <body>
-    <!-- MODAL IMPORTADOR -->
     <div id="importModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeImportModal()">&times;</span>
             <div class="modal-header">📥 IMPORTAR DATOS CSV</div>
-            
             <div class="form-group">
                 <label>Trader (PABLO, JAVI, GUILLEM o ALEX):</label>
                 <input type="text" id="traderInput" placeholder="PABLO" maxlength="20">
             </div>
-
             <div class="form-group">
                 <label>Pega aquí el contenido del CSV:</label>
                 <textarea id="csvInput" placeholder="Pega el contenido CSV aquí..."></textarea>
             </div>
-
             <button class="btn-import" onclick="importCSV()" style="width: 100%; margin-bottom: 15px;">▶️ IMPORTAR AHORA</button>
-
             <div class="log-box" id="logBox"></div>
         </div>
     </div>
 
-    <!-- APP PRINCIPAL -->
     <header>
         <div class="container">
             <h1>📊 Prop Trading Dashboard</h1>
@@ -278,10 +188,6 @@
                 <div class="stat-card">
                     <div class="stat-label">Fase REAL</div>
                     <div class="stat-value" id="realCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Invertido</div>
-                    <div class="stat-value" id="totalInvested">$0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Traders Activos</div>
@@ -297,23 +203,15 @@
             <button class="tab-btn" onclick="switchTab('JAVI')">JAVI</button>
             <button class="tab-btn" onclick="switchTab('GUILLEM')">GUILLEM</button>
             <button class="tab-btn" onclick="switchTab('ALEX')">ALEX</button>
-            <button class="tab-btn" onclick="switchTab('profit')">📈 PROFIT</button>
         </div>
 
         <div class="content">
             <div class="controls">
                 <button class="btn-import" onclick="openImportModal()">📥 IMPORTAR CSV</button>
-                <button class="btn-success" onclick="refreshData()">🔄 RECARGAR</button>
+                <button class="btn-success" onclick="loadData()">🔄 RECARGAR</button>
             </div>
-
             <div id="main-content">
-                <div class="empty">📥 Haz clic en "IMPORTAR CSV" para cargar tus datos...</div>
-            </div>
-
-            <div id="profit-content" style="display:none;">
-                <div class="chart-container">
-                    <canvas id="profitChart"></canvas>
-                </div>
+                <div class="empty">📥 Cargando...</div>
             </div>
         </div>
     </main>
@@ -328,13 +226,11 @@
             appId: "1:168517447185:web:8d8b1a0d8ca49b62354bb0"
         };
 
-        let db = null;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         let currentTab = 'PABLO';
         let allData = {};
-
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
 
         function openImportModal() {
             document.getElementById('importModal').style.display = 'block';
@@ -359,11 +255,6 @@
         }
 
         async function importCSV() {
-            if (!db) {
-                alert('❌ Firebase no está listo. Recarga la página.');
-                return;
-            }
-
             const trader = document.getElementById('traderInput').value.trim().toUpperCase();
             const csvData = document.getElementById('csvInput').value;
 
@@ -401,7 +292,7 @@
                 const dataRows = rows.slice(headerIndex + 1);
 
                 addLog(`📊 Headers: ${headers.length}`);
-                addLog(`📝 Datos: ${dataRows.length} filas`);
+                addLog(`📝 Filas: ${dataRows.length}`);
 
                 let successCount = 0;
                 for (let i = 0; i < dataRows.length; i++) {
@@ -416,47 +307,34 @@
                     if (Object.keys(account).some(k => account[k])) {
                         await db.collection('traders').doc(trader).collection('cuentas').add({
                             ...account,
-                            timestamp: new Date(),
-                            importedAt: new Date().toISOString()
+                            timestamp: new Date()
                         });
                         successCount++;
                     }
                 }
 
-                addLog(`✅ Importación completada!`);
-                addLog(`📊 ${successCount} cuentas para ${trader}`);
-
+                addLog(`✅ Listo: ${successCount} cuentas`);
                 setTimeout(() => {
                     closeImportModal();
                     loadData();
                 }, 2000);
 
             } catch (error) {
-                addLog(`❌ Error: ${error.message}`);
+                addLog(`❌ ${error.message}`);
             }
         }
 
         async function loadData() {
             try {
                 allData = {};
-                let totalAccounts = 0;
-
                 for (const trader of ['PABLO', 'JAVI', 'GUILLEM', 'ALEX']) {
                     const snapshot = await db.collection('traders').doc(trader).collection('cuentas').orderBy('timestamp', 'desc').get();
                     allData[trader] = snapshot.docs.map(d => ({...d.data(), docId: d.id}));
-                    totalAccounts += allData[trader].length;
                 }
-
                 renderTable();
                 updateStats();
-
-                if (totalAccounts === 0) {
-                    document.getElementById('main-content').innerHTML = '<div class="empty">📥 Sin datos aún. Importa tus CSV...</div>';
-                }
-
             } catch (error) {
-                console.error(error);
-                document.getElementById('main-content').innerHTML = '<div class="empty">❌ Error: ' + error.message + '</div>';
+                document.getElementById('main-content').innerHTML = '<div class="empty">❌ ' + error.message + '</div>';
             }
         }
 
@@ -464,20 +342,11 @@
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-
-            document.getElementById('main-content').style.display = tab !== 'profit' ? 'block' : 'none';
-            document.getElementById('profit-content').style.display = tab === 'profit' ? 'block' : 'none';
-
-            if (tab === 'profit') {
-                renderProfitChart();
-            } else {
-                renderTable();
-            }
+            renderTable();
         }
 
         function renderTable() {
             const accounts = allData[currentTab] || [];
-            
             if (accounts.length === 0) {
                 document.getElementById('main-content').innerHTML = `<div class="empty">Sin cuentas para ${currentTab}</div>`;
                 return;
@@ -489,85 +358,27 @@
             accounts.forEach(acc => {
                 const fase = (acc.Fase || 'WAIT').toUpperCase();
                 const faseClass = 'phase-' + fase.toLowerCase();
-                
-                html += `<tr>
-                    <td>${acc.Cuenta || '-'}</td>
-                    <td>${acc.Empresa || '-'}</td>
-                    <td>${acc.APP || '-'}</td>
-                    <td>${acc['TD Loss'] || '-'}</td>
-                    <td>${acc['NO News'] || '-'}</td>
-                    <td>${acc.Daily || '5%'}</td>
-                    <td>${acc['Max DD'] || '10%'}</td>
-                    <td>${acc['PT 1'] || '8%'}</td>
-                    <td>${acc['PT 2'] || '5%'}</td>
-                    <td>${acc.NDX || '-'}</td>
-                    <td>${acc.Saldo || '$0'}</td>
-                    <td>${acc.Cierre || '-'}</td>
-                    <td>${acc.TDs || '0/0'}</td>
-                    <td><span class="phase-badge ${faseClass}">${fase}</span></td>
-                    <td>${acc.Activo || '-'}</td>
-                    <td>${acc.Precio || '$0'}</td>
-                    <td>${acc.Retiro || '$0'}</td>
-                    <td>${acc.Notas || ''}</td>
-                </tr>`;
+                html += `<tr><td>${acc.Cuenta || '-'}</td><td>${acc.Empresa || '-'}</td><td>${acc.APP || '-'}</td><td>${acc['TD Loss'] || '-'}</td><td>${acc['NO News'] || '-'}</td><td>${acc.Daily || '5%'}</td><td>${acc['Max DD'] || '10%'}</td><td>${acc['PT 1'] || '8%'}</td><td>${acc['PT 2'] || '5%'}</td><td>${acc.NDX || '-'}</td><td>${acc.Saldo || '$0'}</td><td>${acc.Cierre || '-'}</td><td>${acc.TDs || '0/0'}</td><td><span class="phase-badge ${faseClass}">${fase}</span></td><td>${acc.Activo || '-'}</td><td>${acc.Precio || '$0'}</td><td>${acc.Retiro || '$0'}</td><td>${acc.Notas || ''}</td></tr>`;
             });
 
             html += '</tbody></table></div>';
             document.getElementById('main-content').innerHTML = html;
         }
 
-        function renderProfitChart() {
-            const ctx = document.getElementById('profitChart');
-            if (!ctx) return;
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
-                    datasets: [
-                        {label: 'PABLO', data: [17400, 11355, 24600, 27263, 19266, 31741, 24632, 13481, 3201], borderColor: '#0ea5e9', tension: 0.3, fill: false},
-                        {label: 'JAVI', data: [1700, 5540, 10600, 1130, 8240, 4760, 8120, 13300, 0], borderColor: '#10b981', tension: 0.3, fill: false},
-                        {label: 'GUILLEM', data: [8500, 9670, 8815, 10045, 5490, 9350, 9220, 6590, 0], borderColor: '#f59e0b', tension: 0.3, fill: false},
-                        {label: 'ALEX', data: [12000, 6105, 11730, 12420, 2815, 15200, 13745, 13860, 0], borderColor: '#a855f7', tension: 0.3, fill: false}
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {legend: {labels: {color: '#cbd5e1'}}},
-                    scales: {
-                        y: {ticks: {color: '#94a3b8'}, grid: {color: 'rgba(148, 163, 184, 0.1)'}},
-                        x: {ticks: {color: '#94a3b8'}, grid: {color: 'rgba(148, 163, 184, 0.1)'}}
-                    }
-                }
-            });
-        }
-
         function updateStats() {
-            let totalAccounts = 0, realCount = 0, activeTraders = 0, totalInvested = 0;
-            const tradersWithData = new Set();
-
-            Object.entries(allData).forEach(([trader, accounts]) => {
-                if (accounts.length > 0) {
-                    tradersWithData.add(trader);
-                    activeTraders = tradersWithData.size;
-                }
-                
+            let total = 0, real = 0, traders = 0;
+            Object.entries(allData).forEach(([t, accounts]) => {
+                if (accounts.length > 0) traders++;
                 accounts.forEach(acc => {
-                    totalAccounts++;
-                    if ((acc.Fase || '').toUpperCase() === 'REAL') realCount++;
+                    total++;
+                    if ((acc.Fase || '').toUpperCase() === 'REAL') real++;
                 });
             });
-
-            document.getElementById('totalAccounts').innerText = totalAccounts;
-            document.getElementById('realCount').innerText = realCount;
-            document.getElementById('activeTraders').innerText = activeTraders;
+            document.getElementById('totalAccounts').innerText = total;
+            document.getElementById('realCount').innerText = real;
+            document.getElementById('activeTraders').innerText = traders;
         }
 
-        function refreshData() {
-            loadData();
-        }
-
-        // Cargar datos al abrir
         loadData();
     </script>
 </body>
