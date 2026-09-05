@@ -34,20 +34,16 @@
                     <div class="stat-label">Cuentas</div>
                     <div class="stat-value" id="totalAccounts">0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">REAL</div>
-                    <div class="stat-value" id="realCount">0</div>
-                </div>
             </div>
         </div>
     </header>
 
     <main class="container">
         <div class="tabs">
-            <button class="tab-btn active" onclick="load('PABLO')">PABLO</button>
-            <button class="tab-btn" onclick="load('JAVI')">JAVI</button>
-            <button class="tab-btn" onclick="load('GUILLEM')">GUILLEM</button>
-            <button class="tab-btn" onclick="load('ALEX')">ALEX</button>
+            <button class="tab-btn active" data-trader="PABLO" onclick="switchTab(this)">PABLO</button>
+            <button class="tab-btn" data-trader="JAVI" onclick="switchTab(this)">JAVI</button>
+            <button class="tab-btn" data-trader="GUILLEM" onclick="switchTab(this)">GUILLEM</button>
+            <button class="tab-btn" data-trader="ALEX" onclick="switchTab(this)">ALEX</button>
         </div>
 
         <div class="content" id="content">
@@ -59,10 +55,13 @@
         const PROJECT = 'prop-trading1996';
         const API_KEY = 'AIzaSyCt6GxIpUaQa0qgToUKz3LKh01nH0Ny9LI';
 
-        async function load(trader) {
+        function switchTab(btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            btn.classList.add('active');
+            load(btn.dataset.trader);
+        }
 
+        async function load(trader) {
             const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/traders/${trader}/cuentas?key=${API_KEY}`;
             
             try {
@@ -70,25 +69,25 @@
                 const data = await res.json();
                 const docs = data.documents || [];
                 
+                if (docs.length === 0) {
+                    document.getElementById('content').innerHTML = '<div class="empty">Sin cuentas para ' + trader + '</div>';
+                    return;
+                }
+
                 let html = '<table><thead><tr><th>Cuenta</th><th>Empresa</th><th>Saldo</th><th>Cierre</th><th>Fase</th></tr></thead><tbody>';
                 
                 docs.forEach(doc => {
-                    const fields = doc.fields || {};
-                    const cuenta = fields.Cuenta?.stringValue || '-';
-                    const empresa = fields.Empresa?.stringValue || '-';
-                    const saldo = fields.Saldo?.stringValue || '$0';
-                    const cierre = fields.Cierre?.stringValue || '-';
-                    const fase = fields.Fase?.stringValue || 'WAIT';
+                    const f = doc.fields || {};
+                    const getVal = (key) => f[key]?.stringValue || '-';
                     
-                    html += `<tr><td>${cuenta}</td><td>${empresa}</td><td>${saldo}</td><td>${cierre}</td><td>${fase}</td></tr>`;
+                    html += `<tr><td>${getVal('Cuenta')}</td><td>${getVal('Empresa')}</td><td>${getVal('Saldo')}</td><td>${getVal('Cierre')}</td><td>${getVal('Fase')}</td></tr>`;
                 });
                 
                 html += '</tbody></table>';
                 document.getElementById('content').innerHTML = html;
-                
                 document.getElementById('totalAccounts').innerText = docs.length;
             } catch (e) {
-                document.getElementById('content').innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+                document.getElementById('content').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
             }
         }
 
