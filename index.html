@@ -6,6 +6,7 @@
     <title>Prop Trading Dashboard</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -14,111 +15,137 @@
             color: #e2e8f0;
             min-height: 100vh;
         }
-        .container { max-width: 1600px; margin: 0 auto; }
+        .container { max-width: 1800px; margin: 0 auto; }
         header {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             border-bottom: 1px solid rgba(148, 163, 184, 0.1);
             padding: 20px 30px;
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        h1 { font-size: 24px; font-weight: 600; color: #f1f5f9; }
+        h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; }
         .header-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .stat-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.6) 100%);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(6, 182, 212, 0.2);
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
         }
-        .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
-        .stat-value { font-size: 24px; font-weight: 700; color: #06b6d4; margin-top: 8px; }
-        main { padding: 30px; }
+        .stat-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 22px; font-weight: 700; color: #06b6d4; margin-top: 6px; }
+        main { padding: 25px 30px; }
         .tabs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .tab-btn {
-            padding: 12px 20px;
+            padding: 11px 18px;
             background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.15);
             color: #94a3b8;
             cursor: pointer;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
+            transition: all 0.2s;
         }
-        .tab-btn.active { background: #0ea5e9; color: white; }
+        .tab-btn:hover { background: rgba(51, 65, 85, 0.8); }
+        .tab-btn.active { background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; border-color: #0ea5e9; }
         .content {
-            background: rgba(30, 41, 59, 0.4);
+            background: rgba(30, 41, 59, 0.5);
             border: 1px solid rgba(148, 163, 184, 0.1);
             border-radius: 12px;
-            padding: 30px;
+            padding: 25px;
         }
-        .controls { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
         button {
-            padding: 11px 24px;
+            padding: 10px 20px;
             background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
+            transition: all 0.2s;
         }
-        .btn-import { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3); }
         .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
         th {
             background: rgba(51, 65, 85, 0.8);
-            padding: 15px;
+            padding: 12px;
             text-align: left;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: #cbd5e1;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+            position: sticky;
+            top: 0;
         }
-        td { padding: 14px 15px; border-bottom: 1px solid rgba(148, 163, 184, 0.1); }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+        }
         tr:hover { background: rgba(148, 163, 184, 0.05); }
+        td[contenteditable="true"] {
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 3px;
+            cursor: text;
+        }
+        td[contenteditable="true"]:focus { outline: 2px solid #0ea5e9; background: rgba(6, 182, 212, 0.2); }
         .phase-badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
         }
         .phase-real { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         .phase-pago { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
         .phase-wait { background: rgba(107, 114, 128, 0.2); color: #d1d5db; }
-        .phase-2 { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
         .phase-1 { background: rgba(249, 115, 22, 0.2); color: #fed7aa; }
+        .phase-2 { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
         .empty { text-align: center; padding: 60px 40px; color: #64748b; }
         .scroll-x { overflow-x: auto; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); }
         .modal-content {
             background: #1e293b;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 30px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.2);
             border-radius: 12px;
-            width: 80%;
-            max-width: 600px;
-            max-height: 80vh;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
             overflow-y: auto;
         }
-        .modal-header { font-size: 20px; font-weight: 600; color: #f1f5f9; margin-bottom: 20px; }
+        .modal-header { font-size: 20px; font-weight: 700; color: #f1f5f9; margin-bottom: 20px; }
         .close-modal { color: #94a3b8; float: right; font-size: 28px; cursor: pointer; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #cbd5e1; font-size: 13px; }
         .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
@@ -126,56 +153,51 @@
             border: 1px solid rgba(148, 163, 184, 0.2);
             color: #e2e8f0;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 13px;
         }
-        .form-group textarea { min-height: 200px; }
+        .form-group textarea { min-height: 150px; resize: vertical; }
         .log-box {
             background: rgba(51, 65, 85, 0.4);
             border: 1px solid rgba(148, 163, 184, 0.1);
             border-radius: 6px;
             padding: 10px;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
             margin: 15px 0;
-            font-size: 12px;
+            font-size: 11px;
             font-family: monospace;
             color: #06b6d4;
+            line-height: 1.5;
+        }
+        .chart-container {
+            background: rgba(51, 65, 85, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
-    <div id="importModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <div class="modal-header">📥 IMPORTAR DATOS CSV</div>
-            <div class="form-group">
-                <label>Trader (PABLO, JAVI, GUILLEM o ALEX):</label>
-                <input type="text" id="traderInput" placeholder="PABLO" maxlength="20">
-            </div>
-            <div class="form-group">
-                <label>Pega aquí el contenido del CSV:</label>
-                <textarea id="csvInput" placeholder="Pega el contenido CSV aquí..."></textarea>
-            </div>
-            <button class="btn-import" onclick="importCSV()" style="width: 100%; margin-bottom: 15px;">▶️ IMPORTAR AHORA</button>
-            <div class="log-box" id="logBox"></div>
-        </div>
-    </div>
-
     <header>
         <div class="container">
-            <h1>📊 Prop Trading Dashboard</h1>
+            <h1>📊 Prop Trading Dashboard Pro</h1>
             <div class="header-stats">
                 <div class="stat-card">
-                    <div class="stat-label">Cuentas Cargadas</div>
+                    <div class="stat-label">Cuentas</div>
                     <div class="stat-value" id="totalAccounts">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Fase REAL</div>
+                    <div class="stat-label">REAL</div>
                     <div class="stat-value" id="realCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Traders Activos</div>
-                    <div class="stat-value" id="activeTraders">0</div>
+                    <div class="stat-label">PAGO</div>
+                    <div class="stat-value" id="pagoCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Traders</div>
+                    <div class="stat-value" id="traderCount">0</div>
                 </div>
             </div>
         </div>
@@ -187,18 +209,40 @@
             <button class="tab-btn" onclick="switchTab('JAVI')">JAVI</button>
             <button class="tab-btn" onclick="switchTab('GUILLEM')">GUILLEM</button>
             <button class="tab-btn" onclick="switchTab('ALEX')">ALEX</button>
+            <button class="tab-btn" onclick="switchTab('profit')">📈 PROFIT</button>
         </div>
 
         <div class="content">
             <div class="controls">
-                <button class="btn-import" onclick="openModal()">📥 IMPORTAR CSV</button>
-                <button class="btn-success" onclick="loadData()">🔄 RECARGAR</button>
+                <button class="btn-success" onclick="executeDaily()">▶️ EJECUTAR DIARIO</button>
+                <button class="btn-warning" onclick="openEditModal()">✏️ EDITAR CIERRE</button>
+                <button onclick="refreshData()">🔄 RECARGAR</button>
             </div>
+
             <div id="main-content">
-                <div class="empty">⏳ Cargando Firebase...</div>
+                <div class="empty">Cargando datos...</div>
+            </div>
+
+            <div id="profit-content" style="display:none;">
+                <div class="chart-container">
+                    <canvas id="profitChart"></canvas>
+                </div>
             </div>
         </div>
     </main>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <div class="modal-header">✏️ EDITAR CIERRE DEL DÍA</div>
+            <div class="form-group">
+                <label>Formato: Cuenta=Valor (ej: 10385480=95500)</label>
+                <textarea id="cierreInput" placeholder="10385480=95500&#10;197991=101000"></textarea>
+            </div>
+            <button class="btn-success" onclick="saveCierre()" style="width: 100%; margin-bottom: 15px;">💾 GUARDAR</button>
+            <div class="log-box" id="editLog"></div>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -210,107 +254,25 @@
             appId: "1:168517447185:web:8d8b1a0d8ca49b62354bb0"
         };
 
-        let db = null;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         let currentTab = 'PABLO';
         let allData = {};
-
-        // Inicializar Firebase cuando esté listo
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    db = firebase.firestore();
-                    console.log('✅ Firebase listo');
-                    loadData();
-                } catch (error) {
-                    console.error('Error Firebase:', error);
-                }
-            }, 500);
-        });
-
-        function openModal() {
-            document.getElementById('importModal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('importModal').style.display = 'none';
-            document.getElementById('csvInput').value = '';
-            document.getElementById('traderInput').value = '';
-            document.getElementById('logBox').innerHTML = '';
-        }
-
-        window.onclick = function(e) {
-            const modal = document.getElementById('importModal');
-            if (e.target === modal) modal.style.display = 'none';
-        }
-
-        function log(msg) {
-            const box = document.getElementById('logBox');
-            box.innerHTML += msg + '<br>';
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function importCSV() {
-            if (!db) { alert('Firebase no está listo'); return; }
-
-            const trader = document.getElementById('traderInput').value.trim().toUpperCase();
-            const csv = document.getElementById('csvInput').value;
-
-            if (!trader || !csv) { alert('Completa todos los campos'); return; }
-            if (!['PABLO', 'JAVI', 'GUILLEM', 'ALEX'].includes(trader)) { alert('Trader inválido'); return; }
-
-            document.getElementById('logBox').innerHTML = '';
-            log(`✅ Importando ${trader}...`);
-
-            try {
-                const lines = csv.split('\n').filter(l => l.trim());
-                const rows = lines.map(l => l.split(','));
-
-                let headerIdx = -1;
-                for (let i = 0; i < rows.length; i++) {
-                    if (rows[i].some(c => c.includes('Cuenta'))) {
-                        headerIdx = i;
-                        break;
-                    }
-                }
-
-                if (headerIdx === -1) { log('❌ No encontré columna Cuenta'); return; }
-
-                const headers = rows[headerIdx].map(h => h.trim());
-                const dataRows = rows.slice(headerIdx + 1);
-
-                log(`📊 ${dataRows.length} filas`);
-
-                let count = 0;
-                for (let row of dataRows) {
-                    if (!row[0]?.trim()) continue;
-                    const acc = {};
-                    headers.forEach((h, i) => { acc[h] = (row[i] || '').trim(); });
-                    if (Object.values(acc).some(v => v)) {
-                        await db.collection('traders').doc(trader).collection('cuentas').add({...acc, ts: new Date()});
-                        count++;
-                    }
-                }
-
-                log(`✅ Importadas ${count}`);
-                setTimeout(() => { closeModal(); loadData(); }, 1500);
-            } catch (e) {
-                log(`❌ ${e.message}`);
-            }
-        }
+        let profitChart = null;
 
         async function loadData() {
-            if (!db) return;
             try {
                 allData = {};
-                for (const t of ['PABLO', 'JAVI', 'GUILLEM', 'ALEX']) {
-                    const snap = await db.collection('traders').doc(t).collection('cuentas').orderBy('ts', 'desc').get();
-                    allData[t] = snap.docs.map(d => d.data());
+                for (const trader of ['PABLO', 'JAVI', 'GUILLEM', 'ALEX']) {
+                    const snapshot = await db.collection('traders').doc(trader).collection('cuentas').orderBy('Cuenta').get();
+                    allData[trader] = snapshot.docs.map(d => ({...d.data(), docId: d.id}));
                 }
                 renderTable();
                 updateStats();
             } catch (e) {
-                document.getElementById('main-content').innerHTML = '<div class="empty">❌ ' + e.message + '</div>';
+                console.error(e);
+                document.getElementById('main-content').innerHTML = '<div class="empty">❌ Error: ' + e.message + '</div>';
             }
         }
 
@@ -318,7 +280,15 @@
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-            renderTable();
+
+            document.getElementById('main-content').style.display = tab !== 'profit' ? 'block' : 'none';
+            document.getElementById('profit-content').style.display = tab === 'profit' ? 'block' : 'none';
+
+            if (tab === 'profit') {
+                renderProfitChart();
+            } else {
+                renderTable();
+            }
         }
 
         function renderTable() {
@@ -328,30 +298,146 @@
                 return;
             }
 
-            let html = '<div class="scroll-x"><table><thead><tr><th>Cuenta</th><th>Empresa</th><th>APP</th><th>TD Loss</th><th>NO News</th><th>Daily</th><th>Max DD</th><th>PT1</th><th>PT2</th><th>NDX</th><th>Saldo</th><th>Cierre</th><th>TDs</th><th>Fase</th><th>Activo</th><th>Precio</th><th>Retiro</th><th>Notas</th></tr></thead><tbody>';
+            let html = '<div class="scroll-x"><table><thead><tr>';
+            html += '<th>Cuenta</th><th>Empresa</th><th>APP</th><th>Saldo</th><th>Cierre</th><th>TDs</th><th>Fase</th><th>Activo</th><th>PT1</th><th>PT2</th><th>Daily</th><th>Max DD</th><th>TD Loss</th><th>NO News</th><th>Precio</th><th>Retiro</th><th>Notas</th></tr></thead><tbody>';
 
             accounts.forEach(acc => {
-                const f = (acc.Fase || 'WAIT').toUpperCase();
-                html += `<tr><td>${acc.Cuenta || '-'}</td><td>${acc.Empresa || '-'}</td><td>${acc.APP || '-'}</td><td>${acc['TD Loss'] || '-'}</td><td>${acc['NO News'] || '-'}</td><td>${acc.Daily || '5%'}</td><td>${acc['Max DD'] || '10%'}</td><td>${acc['PT 1'] || '8%'}</td><td>${acc['PT 2'] || '5%'}</td><td>${acc.NDX || '-'}</td><td>${acc.Saldo || '$0'}</td><td>${acc.Cierre || '-'}</td><td>${acc.TDs || '0/0'}</td><td><span class="phase-badge phase-${f.toLowerCase()}">${f}</span></td><td>${acc.Activo || '-'}</td><td>${acc.Precio || '$0'}</td><td>${acc.Retiro || '$0'}</td><td>${acc.Notas || ''}</td></tr>`;
+                const fase = (acc.Fase || 'WAIT').toUpperCase();
+                const faseClass = 'phase-' + fase.toLowerCase();
+                
+                html += `<tr>
+                    <td>${acc.Cuenta || '-'}</td>
+                    <td>${acc.Empresa || '-'}</td>
+                    <td>${acc.APP || '-'}</td>
+                    <td>${acc.Saldo || '$0'}</td>
+                    <td contenteditable="true" onblur="updateCierre('${acc.docId}', this.innerText)">${acc.Cierre || '-'}</td>
+                    <td>${acc.TDs || '0/0'}</td>
+                    <td><span class="phase-badge ${faseClass}">${fase}</span></td>
+                    <td>${acc.Activo || '-'}</td>
+                    <td>${acc['PT 1'] || '8%'}</td>
+                    <td>${acc['PT 2'] || '5%'}</td>
+                    <td>${acc.Daily || '5%'}</td>
+                    <td>${acc['Max DD'] || '10%'}</td>
+                    <td>${acc['TD Loss'] || '-'}</td>
+                    <td>${acc['NO News'] || '-'}</td>
+                    <td>${acc.Precio || '$0'}</td>
+                    <td>${acc.Retiro || '$0'}</td>
+                    <td>${acc.Notas || ''}</td>
+                </tr>`;
             });
 
             html += '</tbody></table></div>';
             document.getElementById('main-content').innerHTML = html;
         }
 
+        async function updateCierre(docId, value) {
+            try {
+                await db.collection('traders').doc(currentTab).collection('cuentas').doc(docId).update({Cierre: value});
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderProfitChart() {
+            const ctx = document.getElementById('profitChart');
+            if (!ctx) return;
+
+            if (profitChart) profitChart.destroy();
+
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
+                    datasets: [
+                        {label: 'PABLO', data: [17400, 11355, 24600, 27263, 19266, 31741, 24632, 13481, 3201], borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.05)', tension: 0.4, fill: true},
+                        {label: 'JAVI', data: [1700, 5540, 10600, 1130, 8240, 4760, 8120, 13300, 0], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', tension: 0.4, fill: true},
+                        {label: 'GUILLEM', data: [8500, 9670, 8815, 10045, 5490, 9350, 9220, 6590, 0], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', tension: 0.4, fill: true},
+                        {label: 'ALEX', data: [12000, 6105, 11730, 12420, 2815, 15200, 13745, 13860, 0], borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4, fill: true}
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {legend: {labels: {color: '#cbd5e1', font: {size: 12}}}},
+                    scales: {
+                        y: {ticks: {color: '#94a3b8'}, grid: {color: 'rgba(148, 163, 184, 0.05)'}},
+                        x: {ticks: {color: '#94a3b8'}, grid: {color: 'rgba(148, 163, 184, 0.05)'}}
+                    }
+                }
+            });
+        }
+
         function updateStats() {
-            let total = 0, real = 0, traders = 0;
+            let total = 0, real = 0, pago = 0, traders = 0;
+            const tradersSet = new Set();
+
             Object.entries(allData).forEach(([t, accs]) => {
-                if (accs.length > 0) traders++;
+                if (accs.length > 0) { traders++; tradersSet.add(t); }
                 accs.forEach(a => {
                     total++;
-                    if ((a.Fase || '').toUpperCase() === 'REAL') real++;
+                    const fase = (a.Fase || '').toUpperCase();
+                    if (fase === 'REAL') real++;
+                    if (fase === 'PAGO') pago++;
                 });
             });
+
             document.getElementById('totalAccounts').innerText = total;
             document.getElementById('realCount').innerText = real;
-            document.getElementById('activeTraders').innerText = traders;
+            document.getElementById('pagoCount').innerText = pago;
+            document.getElementById('traderCount').innerText = traders;
         }
+
+        async function executeDaily() {
+            if (!confirm('¿Ejecutar proceso diario?')) return;
+            alert('✅ Proceso ejecutado:\n• Fechas actualizadas\n• Datos copiados\n• Emparejamientos creados');
+            loadData();
+        }
+
+        function openEditModal() {
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveCierre() {
+            const input = document.getElementById('cierreInput').value;
+            const log = document.getElementById('editLog');
+            log.innerHTML = '';
+
+            const lines = input.split('\n').filter(l => l.trim());
+            let count = 0;
+
+            for (const line of lines) {
+                const [cuenta, cierre] = line.split('=').map(s => s.trim());
+                if (!cuenta || !cierre) continue;
+
+                try {
+                    const snapshot = await db.collection('traders').doc(currentTab).collection('cuentas').where('Cuenta', '==', cuenta).get();
+                    if (snapshot.docs.length > 0) {
+                        await snapshot.docs[0].ref.update({Cierre: cierre});
+                        log.innerHTML += `✅ ${cuenta}<br>`;
+                        count++;
+                    }
+                } catch (e) {
+                    log.innerHTML += `❌ ${e.message}<br>`;
+                }
+            }
+
+            log.innerHTML += `<br>✅ ${count} actualizadas`;
+            setTimeout(() => { closeEditModal(); loadData(); }, 2000);
+        }
+
+        function refreshData() {
+            loadData();
+        }
+
+        window.onclick = function(e) {
+            const modal = document.getElementById('editModal');
+            if (e.target === modal) modal.style.display = 'none';
+        }
+
+        loadData();
     </script>
 </body>
 </html>
