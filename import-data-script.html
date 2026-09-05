@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Import Data to Firebase - Admin Tool</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #0ea5e9; }
+        .status { background: #222; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .progress { background: #333; height: 30px; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+        .progress-bar { background: #0ea5e9; height: 100%; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        button { padding: 12px 24px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #06b6d4; }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+        textarea { width: 100%; height: 200px; background: #222; color: #0ea5e9; border: 1px solid #333; padding: 10px; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Import Data to Firebase</h1>
+    
+    <div class="status">
+        <h2>Instrucciones:</h2>
+        <ol>
+            <li>Pega el contenido del archivo CSV de cada trader (PABLO, JAVI, GUILLEM, ALEX) en el textarea</li>
+            <li>Haz clic en "Start Import"</li>
+            <li>Los datos se subirán a Firebase automáticamente</li>
+            <li>Ejecuta esto 4 veces (una por cada trader)</li>
+        </ol>
+    </div>
+
+    <div class="status">
+        <label>Trader Name (PABLO, JAVI, GUILLEM, ALEX):</label><br>
+        <input type="text" id="traderName" placeholder="PABLO" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid #333; margin: 10px 0; border-radius: 4px;">
+    </div>
+
+    <div class="status">
+        <label>Pega el CSV aquí:</label><br>
+        <textarea id="csvData" placeholder="Pega datos CSV..."></textarea>
+    </div>
+
+    <button onclick="importData()">▶️ START IMPORT</button>
+
+    <div class="status">
+        <h3>Progress:</h3>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <div id="logs" style="max-height: 400px; overflow-y: auto; background: #222; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCt6GxIpUaQa0qgToUKz3LKh01nH0Ny9LI",
+            authDomain: "prop-trading1996.firebaseapp.com",
+            projectId: "prop-trading1996",
+            storageBucket: "prop-trading1996.firebasestorage.app",
+            messagingSenderId: "168517447185",
+            appId: "1:168517447185:web:8d8b1a0d8ca49b62354bb0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML += message + '<br>';
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            const bar = document.getElementById('progressBar');
+            bar.style.width = percent + '%';
+            bar.innerText = percent + '%';
+        }
+
+        async function importData() {
+            const traderName = document.getElementById('traderName').value.trim().toUpperCase();
+            const csvData = document.getElementById('csvData').value;
+
+            if (!traderName || !csvData) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            document.getElementById('logs').innerHTML = '';
+            log(`<span class="success">✅ Iniciando importación para ${traderName}...</span>`);
+
+            try {
+                const lines = csvData.split('\n').filter(l => l.trim());
+                const rows = lines.map(l => l.split(','));
+
+                // Encontrar el header (usualmente es la fila antes de los datos)
+                let headerIndex = -1;
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].some(cell => cell.includes('Cuenta'))) {
+                        headerIndex = i;
+                        break;
+                    }
+                }
+
+                if (headerIndex === -1) {
+                    log(`<span class="error">❌ No se encontró header (columna 'Cuenta')</span>`);
+                    return;
+                }
+
+                const headers = rows[headerIndex].map(h => h.trim());
+                const dataRows = rows.slice(headerIndex + 1);
+
+                log(`<span class="success">📊 Headers encontrados: ${headers.length}</span>`);
+                log(`📝 Filas a importar: ${dataRows.length}`);
+
+                let successCount = 0;
+                for (let i = 0; i < dataRows.length; i++) {
+                    const row = dataRows[i];
+                    if (!row[0] || !row[0].trim()) continue;
+
+                    const account = {};
+                    headers.forEach((header, idx) => {
+                        account[header.trim()] = (row[idx] || '').trim();
+                    });
+
+                    if (Object.keys(account).some(k => account[k])) {
+                        try {
+                            await db.collection('traders').doc(traderName).collection('cuentas').add({
+                                ...account,
+                                timestamp: new Date(),
+                                createdAt: new Date().toISOString()
+                            });
+                            successCount++;
+                        } catch (error) {
+                            log(`<span class="error">❌ Error en fila ${i + headerIndex + 1}: ${error.message}</span>`);
+                        }
+                    }
+
+                    updateProgress(i + 1, dataRows.length);
+                }
+
+                log(`<span class="success">✅ Importación completada!</span>`);
+                log(`<span class="success">📊 Cuentas importadas: ${successCount} para ${traderName}</span>`);
+                document.getElementById('traderName').value = '';
+                document.getElementById('csvData').value = '';
+
+            } catch (error) {
+                log(`<span class="error">❌ Error: ${error.message}</span>`);
+            }
+        }
+    </script>
+</body>
+</html>
