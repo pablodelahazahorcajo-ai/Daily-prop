@@ -1,156 +1,34 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
-    span.s1 {font-kerning: none}
-    span.s2 {font: 12.0px 'Apple Color Emoji'; font-kerning: none}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prop Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
-<p class="p1"><span class="s1">&lt;html lang="es"&gt;</span></p>
-<p class="p1"><span class="s1">&lt;head&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;Prop Trading Dashboard&lt;/title&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
-<p class="p1"><span class="s1">&lt;body class="bg-gradient-to-br from-slate-50 to-slate-100"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="root"&gt;&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const { useState, useEffect } = React;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5subAalhQuoXGDuPG1-m031iAPm-Oz4yl20G_9wxTzgA_ExcohYpC1XiV5q-yw4W-/exec';</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const API = {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>async getData() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>try {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return await response.json();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>} catch (error) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>console.error('Error:', error);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return null;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>},</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>async saveEntry(trader, entry) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>try {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const response = await fetch(APPS_SCRIPT_URL, {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>method: 'POST',</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>body: JSON.stringify({ action: 'saveEntry', trader, entry })</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return await response.json();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>} catch (error) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>console.error('Error:', error);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return null;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>},</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>async executeDaily() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>try {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const response = await fetch(APPS_SCRIPT_URL, {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>method: 'POST',</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>body: JSON.stringify({ action: 'executeDaily' })</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return await response.json();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>} catch (error) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>console.error('Error:', error);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return null;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>};</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>function App() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [data, setData] = useState({ traders: {} });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [loading, setLoading] = useState(true);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [activeTab, setActiveTab] = useState('pablo');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isExecuting, setIsExecuting] = useState(false);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>loadData();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, []);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const loadData = async () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const result = await API.getData();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (result) setData(result);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setLoading(false);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const handleExecuteDaily = async () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsExecuting(true);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>await API.executeDaily();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>await loadData();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsExecuting(false);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const handleSaveEntry = async (trader, entry) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>await API.saveEntry(trader, entry);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>await loadData();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (loading) return &lt;div className="flex items-center justify-center min-h-screen"&gt;&lt;p&gt;Cargando...&lt;/p&gt;&lt;/div&gt;;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>return (</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;header className="border-b border-slate-200 bg-white shadow-sm"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="max-w-7xl mx-auto px-4 py-4"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="flex justify-between items-center"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h1 className="text-3xl font-bold"&gt;</span><span class="s2">📊</span><span class="s1"> Prop Trading Dashboard&lt;/h1&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;button onClick={handleExecuteDaily} disabled={isExecuting} className="px-4 py-2 bg-green-600 text-white rounded-lg"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{isExecuting ? 'Ejecutando...' : 'Ejecutar Diario'}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/header&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;main className="max-w-7xl mx-auto px-4 py-8"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="flex gap-2 mb-6"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>{['pablo', 'javi', 'guillem', 'alex'].map(tab =&gt; (</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;button key={tab} onClick={() =&gt; setActiveTab(tab)} className={`px-4 py-2 font-bold border-b-2 ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent'}`}&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{tab.toUpperCase()}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>))}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="bg-white rounded-lg border border-slate-200 p-6"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;h2 className="text-2xl font-bold mb-4"&gt;{activeTab.toUpperCase()}&lt;/h2&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;table className="w-full text-sm"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;thead&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;tr className="border-b bg-slate-50"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;th className="px-4 py-2 text-left"&gt;Fecha&lt;/th&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;th className="px-4 py-2 text-left"&gt;Empresa&lt;/th&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;th className="px-4 py-2 text-left"&gt;Saldo&lt;/th&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;th className="px-4 py-2 text-left"&gt;Fase&lt;/th&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;th className="px-4 py-2 text-left"&gt;P&amp;L&lt;/th&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/tr&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/thead&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;tbody&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{(data.traders[activeTab.toUpperCase()]?.brokers || []).map((entry, idx) =&gt; (</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;tr key={idx} className="border-b"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;td className="px-4 py-2"&gt;{entry.date}&lt;/td&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;td className="px-4 py-2"&gt;{entry.company}&lt;/td&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;td className="px-4 py-2"&gt;${entry.saldo}&lt;/td&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;td className="px-4 py-2"&gt;{entry.fase}&lt;/td&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;td className="px-4 py-2"&gt;${entry.dailyProfit}&lt;/td&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/tr&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>))}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/tbody&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/table&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/main&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const root = ReactDOM.createRoot(document.getElementById('root'));</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>root.render(&lt;App /&gt;);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
+    <div class="p-8 bg-gray-100 min-h-screen">
+        <h1 class="text-4xl font-bold mb-4">📊 Prop Trading Dashboard</h1>
+        <div class="bg-white p-6 rounded-lg shadow">
+            <p class="text-lg">Sincronizado con Google Sheets</p>
+            <div id="data" class="mt-4 text-sm text-gray-600">Cargando...</div>
+        </div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5subAalhQuoXGDuPG1-m031lAPm-Oz4yl20G_9wxTzgA_ExcohYpC1XiV5q-yw4W-/usercontent';
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
+                const data = await response.json();
+                document.getElementById('data').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('data').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        loadData();
+    </script>
 </body>
 </html>
