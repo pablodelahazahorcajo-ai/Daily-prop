@@ -121,8 +121,6 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 2px solid rgba(148, 163, 184, 0.2);
-            position: sticky;
-            top: 0;
         }
 
         td {
@@ -151,7 +149,6 @@
 
         .scroll-x { overflow-x: auto; }
 
-        /* MODAL STYLES */
         .modal {
             display: none;
             position: fixed;
@@ -190,8 +187,6 @@
             cursor: pointer;
         }
 
-        .close-modal:hover { color: #cbd5e1; }
-
         .form-group {
             margin-bottom: 15px;
         }
@@ -204,8 +199,7 @@
         }
 
         .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             background: rgba(51, 65, 85, 0.6);
@@ -222,33 +216,9 @@
         }
 
         .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
+        .form-group textarea:focus {
             outline: none;
             border-color: #0ea5e9;
-            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.1);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: rgba(51, 65, 85, 0.6);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
-            width: 0%;
-            transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
         }
 
         .log-box {
@@ -271,13 +241,6 @@
             padding: 20px;
             margin: 20px 0;
         }
-
-        @media (max-width: 768px) {
-            .modal-content { width: 95%; margin: 20% auto; }
-            .tabs { grid-template-columns: repeat(2, 1fr); }
-            table { font-size: 11px; }
-            th, td { padding: 10px; }
-        }
     </style>
 </head>
 <body>
@@ -298,10 +261,6 @@
             </div>
 
             <button class="btn-import" onclick="importCSV()" style="width: 100%; margin-bottom: 15px;">▶️ IMPORTAR AHORA</button>
-
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill">0%</div>
-            </div>
 
             <div class="log-box" id="logBox"></div>
         </div>
@@ -348,7 +307,7 @@
             </div>
 
             <div id="main-content">
-                <div class="empty">Haz clic en "IMPORTAR CSV" para cargar tus datos...</div>
+                <div class="empty">📥 Haz clic en "IMPORTAR CSV" para cargar tus datos...</div>
             </div>
 
             <div id="profit-content" style="display:none;">
@@ -369,14 +328,14 @@
             appId: "1:168517447185:web:8d8b1a0d8ca49b62354bb0"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
+        let db = null;
         let currentTab = 'PABLO';
         let allData = {};
-        let profitChart = null;
 
-        // FUNCIONES MODAL
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+
         function openImportModal() {
             document.getElementById('importModal').style.display = 'block';
         }
@@ -399,14 +358,12 @@
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        function updateProgress(current, total) {
-            const percent = Math.round((current / total) * 100);
-            const progressFill = document.getElementById('progressFill');
-            progressFill.style.width = percent + '%';
-            progressFill.innerText = percent + '%';
-        }
-
         async function importCSV() {
+            if (!db) {
+                alert('❌ Firebase no está listo. Recarga la página.');
+                return;
+            }
+
             const trader = document.getElementById('traderInput').value.trim().toUpperCase();
             const csvData = document.getElementById('csvInput').value;
 
@@ -427,7 +384,6 @@
                 const lines = csvData.split('\n').filter(l => l.trim());
                 const rows = lines.map(l => l.split(','));
 
-                // Encontrar header
                 let headerIndex = -1;
                 for (let i = 0; i < rows.length; i++) {
                     if (rows[i].some(cell => cell.includes('Cuenta'))) {
@@ -437,14 +393,14 @@
                 }
 
                 if (headerIndex === -1) {
-                    addLog(`❌ No se encontró columna 'Cuenta' en CSV`);
+                    addLog(`❌ No se encontró columna 'Cuenta'`);
                     return;
                 }
 
                 const headers = rows[headerIndex].map(h => h.trim());
                 const dataRows = rows.slice(headerIndex + 1);
 
-                addLog(`📊 Headers: ${headers.length} columnas`);
+                addLog(`📊 Headers: ${headers.length}`);
                 addLog(`📝 Datos: ${dataRows.length} filas`);
 
                 let successCount = 0;
@@ -465,16 +421,14 @@
                         });
                         successCount++;
                     }
-
-                    updateProgress(i + 1, dataRows.length);
                 }
 
                 addLog(`✅ Importación completada!`);
-                addLog(`📊 ${successCount} cuentas agregadas para ${trader}`);
+                addLog(`📊 ${successCount} cuentas para ${trader}`);
 
                 setTimeout(() => {
                     closeImportModal();
-                    refreshData();
+                    loadData();
                 }, 2000);
 
             } catch (error) {
@@ -482,7 +436,6 @@
             }
         }
 
-        // FUNCIONES APP
         async function loadData() {
             try {
                 allData = {};
@@ -498,10 +451,11 @@
                 updateStats();
 
                 if (totalAccounts === 0) {
-                    document.getElementById('main-content').innerHTML = '<div class="empty">📥 No hay datos. Haz clic en "IMPORTAR CSV" para cargar tus cuentas...</div>';
+                    document.getElementById('main-content').innerHTML = '<div class="empty">📥 Sin datos aún. Importa tus CSV...</div>';
                 }
 
             } catch (error) {
+                console.error(error);
                 document.getElementById('main-content').innerHTML = '<div class="empty">❌ Error: ' + error.message + '</div>';
             }
         }
@@ -566,9 +520,7 @@
             const ctx = document.getElementById('profitChart');
             if (!ctx) return;
 
-            if (profitChart) profitChart.destroy();
-
-            profitChart = new Chart(ctx, {
+            new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
@@ -603,15 +555,12 @@
                 accounts.forEach(acc => {
                     totalAccounts++;
                     if ((acc.Fase || '').toUpperCase() === 'REAL') realCount++;
-                    const precio = parseFloat((acc.Precio || '').replace(/[$,]/g, '')) || 0;
-                    totalInvested += precio;
                 });
             });
 
             document.getElementById('totalAccounts').innerText = totalAccounts;
             document.getElementById('realCount').innerText = realCount;
             document.getElementById('activeTraders').innerText = activeTraders;
-            document.getElementById('totalInvested').innerText = '$' + totalInvested.toLocaleString('es-ES', {maximumFractionDigits: 0});
         }
 
         function refreshData() {
