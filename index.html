@@ -2,33 +2,22 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prop Trading</title>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="p-8 bg-gray-100 min-h-screen">
-        <h1 class="text-4xl font-bold mb-4">📊 Prop Trading Dashboard</h1>
-        <div class="bg-white p-6 rounded-lg shadow">
-            <p class="text-lg">Sincronizado con Google Sheets</p>
-            <div id="data" class="mt-4 text-sm text-gray-600">Cargando...</div>
-        </div>
-    </div>
-
+<body style="font-family: Arial; padding: 20px; background: #f0f0f0;">
+    <h1>Prop Trading Dashboard</h1>
+    <p>Sincronizado con Google Sheets</p>
+    <div id="resultado">Cargando...</div>
+    
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5subAalhQuoXGDuPG1-m031lAPm-Oz4yl20G_9wxTzgA_ExcohYpC1XiV5q-yw4W-/usercontent';
-
-        async function loadData() {
-            try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
-                const data = await response.json();
-                document.getElementById('data').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('data').innerHTML = `Error: ${error.message}`;
-            }
-        }
-
-        loadData();
+        fetch('https://script.google.com/macros/s/AKfycbw5subAalhQuoXGDuPG1-m031lAPm-Oz4yl20G_9wxTzgA_ExcohYpC1XiV5q-yw4W-/usercontent?action=getData')
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('resultado').innerHTML = '<pre>' + JSON.stringify(d, null, 2) + '</pre>';
+            })
+            .catch(e => {
+                document.getElementById('resultado').innerHTML = 'Error: ' + e.message;
+            });
     </script>
 </body>
 </html>
