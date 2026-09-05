@@ -3,95 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prop Trading Dashboard</title>
+    <title>Debug Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; min-height: 100vh; }
-        .container { max-width: 1800px; margin: 0 auto; }
-        header { background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 20px 30px; }
-        h1 { font-size: 28px; font-weight: 700; }
-        .header-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
-        .stat-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 12px; }
-        .stat-label { font-size: 11px; color: #94a3b8; }
-        .stat-value { font-size: 22px; font-weight: 700; color: #06b6d4; margin-top: 6px; }
-        main { padding: 25px 30px; }
-        .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 11px 18px; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.15); color: #94a3b8; cursor: pointer; border-radius: 6px; }
-        .tab-btn.active { background: #0ea5e9; color: white; }
-        .content { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); border-radius: 12px; padding: 25px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-        th { background: rgba(51, 65, 85, 0.8); padding: 12px; text-align: left; color: #cbd5e1; border-bottom: 2px solid rgba(148, 163, 184, 0.2); }
-        td { padding: 10px; border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
-        .empty { text-align: center; padding: 60px 40px; color: #64748b; }
+        body { font-family: monospace; background: #1a1a1a; color: #0f0; padding: 20px; }
+        pre { background: #222; padding: 20px; border-radius: 8px; overflow-x: auto; }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>📊 Prop Trading Dashboard</h1>
-            <div class="header-stats">
-                <div class="stat-card">
-                    <div class="stat-label">Cuentas</div>
-                    <div class="stat-value" id="totalAccounts">0</div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="tabs">
-            <button class="tab-btn active" data-trader="PABLO" onclick="switchTab(this)">PABLO</button>
-            <button class="tab-btn" data-trader="JAVI" onclick="switchTab(this)">JAVI</button>
-            <button class="tab-btn" data-trader="GUILLEM" onclick="switchTab(this)">GUILLEM</button>
-            <button class="tab-btn" data-trader="ALEX" onclick="switchTab(this)">ALEX</button>
-        </div>
-
-        <div class="content" id="content">
-            <div class="empty">Cargando...</div>
-        </div>
-    </main>
+    <h1>Firebase Data Debug</h1>
+    <pre id="output">Cargando...</pre>
 
     <script>
         const PROJECT = 'prop-trading1996';
         const API_KEY = 'AIzaSyCt6GxIpUaQa0qgToUKz3LKh01nH0Ny9LI';
 
-        function switchTab(btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            load(btn.dataset.trader);
-        }
-
-        async function load(trader) {
-            const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/traders/${trader}/cuentas?key=${API_KEY}`;
+        async function debug() {
+            const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/traders/PABLO/cuentas?key=${API_KEY}`;
             
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                const docs = data.documents || [];
+                const first = data.documents?.[0];
                 
-                if (docs.length === 0) {
-                    document.getElementById('content').innerHTML = '<div class="empty">Sin cuentas para ' + trader + '</div>';
+                if (!first) {
+                    document.getElementById('output').innerText = 'Sin documentos';
                     return;
                 }
 
-                let html = '<table><thead><tr><th>Cuenta</th><th>Empresa</th><th>Saldo</th><th>Cierre</th><th>Fase</th></tr></thead><tbody>';
+                const fields = Object.keys(first.fields || {});
+                const output = `Total cuentas: ${data.documents.length}\n\nPrimer documento - Campos disponibles:\n${fields.join('\n')}\n\nDatos del primer documento:\n${JSON.stringify(first.fields, null, 2)}`;
                 
-                docs.forEach(doc => {
-                    const f = doc.fields || {};
-                    const getVal = (key) => f[key]?.stringValue || '-';
-                    
-                    html += `<tr><td>${getVal('Cuenta')}</td><td>${getVal('Empresa')}</td><td>${getVal('Saldo')}</td><td>${getVal('Cierre')}</td><td>${getVal('Fase')}</td></tr>`;
-                });
-                
-                html += '</tbody></table>';
-                document.getElementById('content').innerHTML = html;
-                document.getElementById('totalAccounts').innerText = docs.length;
+                document.getElementById('output').innerText = output;
             } catch (e) {
-                document.getElementById('content').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+                document.getElementById('output').innerText = 'Error: ' + e.message;
             }
         }
 
-        load('PABLO');
+        debug();
     </script>
 </body>
 </html>
